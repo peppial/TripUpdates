@@ -36,6 +36,10 @@ the timetable behind the live times would hide the very bus the rider is waiting
 One bus must never occupy both rows, so the timetable side drops trips realtime already tracks, and
 any two slots landing on the same displayed minute collapse into one, the live reading winning.
 
+Anything further out than `Horizon` (two hours) is dropped. The last bus up the mountain is followed
+by a thirteen hour gap, and "801 минути" is not something a rider standing at the stop is waiting
+for — past the horizon the direction simply reads as having no upcoming service.
+
 Service days come from `calendar_dates.txt` — this feed ships no `calendar.txt`, listing every
 operating day explicitly (~950 services per date) — and departure times are parsed as offsets from
 the start of the service day, so a `24:40:00` bus lands at 00:40 the next morning.
@@ -68,6 +72,7 @@ headsigns.
 | `TripUpdates:Feed:PollInterval` | `00:00:30` |
 | `TripUpdates:Feed:StaticRefreshInterval` | `1.00:00:00` |
 | `TripUpdates:Feed:StaleAfter` | `00:02:00` |
+| `TripUpdates:Feed:Horizon` | `02:00:00` |
 | `TripUpdates:Feed:CacheDirectory` | `cache` |
 
 Direction labels only apply to the line they were written for. Any other line falls back to

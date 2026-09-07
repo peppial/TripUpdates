@@ -30,7 +30,7 @@ public sealed class ArrivalsService(FeedOptions options)
             Directions: directions);
     }
 
-    private static DirectionArrival Build(
+    private DirectionArrival Build(
         StaticCatalog catalog, DirectionBinding direction, RealtimeSnapshot? snapshot, DateTimeOffset now)
     {
         var line = catalog.Line;
@@ -67,15 +67,17 @@ public sealed class ArrivalsService(FeedOptions options)
     /// nothing but a timetable row — appending the timetable behind the live times would hide the
     /// very bus the rider is waiting for.
     /// </summary>
-    private static List<Slot> NextTwo(
+    private List<Slot> NextTwo(
         StaticCatalog catalog, DirectionBinding direction, RealtimeSnapshot? snapshot, DateTimeOffset now)
     {
+        var horizon = now + options.Horizon;
         var live = Upcoming(direction, snapshot, now).Select(at => new Slot(at, false));
 
         // Anything realtime already tracks is dropped from the timetable side, so one bus cannot
         // appear twice — once as observed, once as printed.
         var printed = catalog
             .ScheduledAfter(direction, now, snapshot?.CoveredTripIds)
+            .TakeWhile(at => at <= horizon)
             .Take(2)
             .Select(at => new Slot(at, true));
 
@@ -83,6 +85,7 @@ public sealed class ArrivalsService(FeedOptions options)
         // both feeds agree on them. Collapsing slots that land on the same displayed minute — live
         // winning the tie — means a mismatch degrades to one correct row, never "21, 21".
         return [.. live.Concat(printed)
+            .Where(s => s.At <= horizon)
             .OrderBy(s => s.At)
             .ThenBy(s => s.Scheduled)
             .DistinctBy(s => MinutesUntil(s.At, now))

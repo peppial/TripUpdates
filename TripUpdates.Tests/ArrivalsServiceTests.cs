@@ -47,10 +47,11 @@ public class ArrivalsServiceTests
         var aleko = response.Directions[0];
         var sofia = response.Directions[1];
 
-        // Captured 18:42 Sofia: the last uphill bus of the day leaves at 20:16 (+93), and the one
-        // after it is the first of the next morning at 07:46 (+783).
+        // Captured 18:42 Sofia: the last uphill bus of the day leaves at 20:16 (+93). The one after
+        // it is the first of the next morning, 783 minutes out — past the horizon, so it is not shown.
         Assert.True(aleko.Scheduled);
-        Assert.Equal("66 към Алеко по разписание след 93 минути, следващият след 783 минути", aleko.Message);
+        Assert.Null(aleko.ThenMinutes);
+        Assert.Equal("66 към Алеко по разписание след 93 минути", aleko.Message);
 
         Assert.False(sofia.Scheduled);
         Assert.StartsWith("66 към София ще дойде след 43 минути", sofia.Message);

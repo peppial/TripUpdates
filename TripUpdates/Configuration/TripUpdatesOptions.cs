@@ -23,6 +23,13 @@ public sealed class FeedOptions
     /// <summary>Readings older than this are reported as stale rather than shown as live.</summary>
     public TimeSpan StaleAfter { get; set; } = TimeSpan.FromSeconds(120);
 
+    /// <summary>
+    /// How far ahead a bus is worth mentioning. Past this the number stops being something you
+    /// wait for — on a route whose last bus is followed by a thirteen hour gap, "801 минути" is
+    /// noise. Beyond the horizon the direction reads as having no upcoming service.
+    /// </summary>
+    public TimeSpan Horizon { get; set; } = TimeSpan.FromMinutes(120);
+
     /// <summary>Where the 19 MB static feed and the resolved catalog are cached.</summary>
     public string CacheDirectory { get; set; } = "cache";
 }

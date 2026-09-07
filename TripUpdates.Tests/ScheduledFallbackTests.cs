@@ -34,14 +34,15 @@ public class ScheduledFallbackTests
             },
         };
 
-    private static ArrivalsService Service() => new(new FeedOptions());
+    private static ArrivalsService Service(TimeSpan? horizon = null) =>
+        new(new FeedOptions { Horizon = horizon ?? TimeSpan.FromHours(2) });
 
     [Fact]
     public void Falls_back_to_the_timetable_when_realtime_has_no_prediction()
     {
         var catalog = CatalogWithTimetable("16:11:00", "17:11:00", "18:16:00", "20:16:00");
 
-        var aleko = Service().Build(catalog, FeedState.Initial, Now).Directions[0];
+        var aleko = Service(TimeSpan.FromHours(4)).Build(catalog, FeedState.Initial, Now).Directions[0];
 
         Assert.True(aleko.HasArrival);
         Assert.True(aleko.Scheduled);
@@ -95,7 +96,7 @@ public class ScheduledFallbackTests
             },
         };
 
-        var aleko = Service().Build(catalog, FeedState.Initial, Now).Directions[0];
+        var aleko = Service(TimeSpan.FromHours(4)).Build(catalog, FeedState.Initial, Now).Directions[0];
 
         Assert.Equal(57, aleko.Minutes);
         Assert.Equal(177, aleko.ThenMinutes);
@@ -156,7 +157,7 @@ public class ScheduledFallbackTests
             CoveredTripIds = new HashSet<string> { "trip-18:08:00" },
         }, null);
 
-        var aleko = Service().Build(catalog, state, Now).Directions[0];
+        var aleko = Service(TimeSpan.FromHours(4)).Build(catalog, state, Now).Directions[0];
 
         Assert.Equal(47, aleko.Minutes);
         Assert.Equal(131, aleko.ThenMinutes);   // 19:30, not the 18:08 it is already tracking
@@ -176,6 +177,54 @@ public class ScheduledFallbackTests
         Assert.Equal(21, aleko.Minutes);
         Assert.False(aleko.Scheduled);          // the live reading wins the tie
         Assert.Equal(49, aleko.ThenMinutes);    // and the next row is the following bus, not a twin
+    }
+
+    [Fact]
+    public void Hides_a_bus_further_out_than_the_horizon()
+    {
+        // Last bus up the mountain at 20:16, then nothing until 07:46 — a "801 минути" second
+        // number is noise, not information.
+        var catalog = CatalogWithTimetable("19:00:00", "23:30:00");
+
+        var aleko = Service(TimeSpan.FromMinutes(120)).Build(catalog, FeedState.Initial, Now).Directions[0];
+
+        Assert.Equal(101, aleko.Minutes);       // 17:19 -> 19:00
+        Assert.Null(aleko.ThenMinutes);         // 23:30 is 371 minutes out
+        Assert.Equal("66 към Алеко по разписание след 101 минути", aleko.Message);
+    }
+
+    [Fact]
+    public void Says_nothing_is_coming_when_even_the_first_bus_is_past_the_horizon()
+    {
+        var catalog = CatalogWithTimetable("23:30:00");
+
+        var aleko = Service(TimeSpan.FromMinutes(120)).Build(catalog, FeedState.Initial, Now).Directions[0];
+
+        Assert.False(aleko.HasArrival);
+        Assert.Equal("66 към Алеко — няма предстоящи курсове", aleko.Message);
+    }
+
+    [Fact]
+    public void Keeps_a_bus_sitting_exactly_on_the_horizon()
+    {
+        var catalog = CatalogWithTimetable("19:19:00");   // 17:19 + 120
+
+        var aleko = Service(TimeSpan.FromMinutes(120)).Build(catalog, FeedState.Initial, Now).Directions[0];
+
+        Assert.Equal(120, aleko.Minutes);
+    }
+
+    [Fact]
+    public void Applies_the_horizon_to_live_predictions_too()
+    {
+        var catalog = CatalogWithTimetable("18:16:00");
+        var byStop = new Dictionary<string, IReadOnlyList<DateTimeOffset>> { ["A1471"] = [Now.AddMinutes(200)] };
+        var state = new FeedState(new RealtimeSnapshot(byStop, Now, Now), null);
+
+        var aleko = Service(TimeSpan.FromMinutes(120)).Build(catalog, state, Now).Directions[0];
+
+        Assert.Equal(57, aleko.Minutes);        // the printed 18:16, not the far-off tracked bus
+        Assert.Null(aleko.ThenMinutes);
     }
 
     [Fact]
