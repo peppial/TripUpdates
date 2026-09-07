@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>66 — Воденичарски механи</title>
+<meta name="theme-color" content="#BE1E2D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="bar">
+  <div>
+    <h1 id="line-name">66</h1>
+    <p id="stop-name">Воденичарски механи</p>
+  </div>
+  <button id="settings-open" class="icon-button" aria-label="Настройки" aria-haspopup="dialog">⚙</button>
+</header>
+
+<p id="banner" class="banner" role="status" hidden></p>
+
+<main id="directions" aria-live="polite" aria-busy="true">
+  <section class="card skeleton"><p class="label">Зареждане…</p></section>
+  <section class="card skeleton"><p class="label">Зареждане…</p></section>
+</main>
+
+<footer class="bar footer">
+  <button id="refresh" class="text-button">Обнови</button>
+</footer>
+
+<dialog id="settings">
+  <form method="dialog" id="settings-form">
+    <h2>Настройки</h2>
+    <label for="setting-line">Линия</label>
+    <input id="setting-line" name="line" inputmode="numeric" autocomplete="off" required>
+    <label for="setting-stop">Спирка</label>
+    <input id="setting-stop" name="stop" autocomplete="off" required>
+    <p class="hint">Името на спирката се търси частично, както е изписано в разписанието.</p>
+    <menu>
+      <button value="cancel" class="text-button" formnovalidate>Отказ</button>
+      <button value="save" id="settings-save" class="primary-button">Запази</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="/app.js"></script>
+</body>
+</html>

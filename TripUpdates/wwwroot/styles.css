@@ -1,0 +1,252 @@
+:root {
+  --red: #BE1E2D;
+  --bg: #0f1113;
+  --surface: #191c1f;
+  --surface-2: #23272b;
+  --text: #f4f5f6;
+  --muted: #9aa2a9;
+  --good: #5ac37a;
+  --warn: #e6584c;
+  --bad: #e6584c;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f2f3f5;
+    --surface: #ffffff;
+    --surface-2: #e9ebee;
+    --text: #14171a;
+    --muted: #5d666e;
+    color-scheme: light;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.bar,
+main,
+.banner {
+  width: 100%;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--red);
+}
+
+@media (prefers-color-scheme: dark) {
+  h1 {
+    color: #ff5c6b;
+  }
+}
+
+#stop-name {
+  margin: 2px 0 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 20px 20px;
+  justify-content: center;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 128px;
+  flex-direction: column;
+}
+
+.card .label {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.card .value {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.minutes {
+  font-size: 68px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  font-size: 20px;
+  color: var(--muted);
+}
+
+.card.none .minutes,
+.card.now .minutes {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.card.now .minutes {
+  color: var(--good);
+}
+
+.card.none .minutes {
+  color: var(--muted);
+}
+
+.card.soon .minutes {
+  color: var(--warn);
+}
+
+.card.stale {
+  opacity: 0.55;
+}
+
+.skeleton {
+  opacity: 0.4;
+  justify-content: center;
+}
+
+.banner {
+  margin: 0 auto 4px;
+  width: calc(100% - 40px);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.banner.error {
+  background: var(--bad);
+  color: #fff;
+}
+
+.banner.warn {
+  background: var(--warn);
+  color: #221a00;
+}
+
+.footer {
+  justify-content: flex-end;
+  padding-top: 0;
+}
+
+.icon-button,
+.text-button,
+.primary-button {
+  font: inherit;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.icon-button {
+  font-size: 20px;
+  line-height: 1;
+  padding: 8px 12px;
+}
+
+.text-button {
+  background: none;
+  color: var(--muted);
+}
+
+.primary-button {
+  background: var(--red);
+  color: #fff;
+  font-weight: 600;
+}
+
+dialog {
+  border: 0;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 22px;
+  width: min(92vw, 380px);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, .55);
+}
+
+dialog h2 {
+  margin: 0 0 14px;
+  font-size: 19px;
+}
+
+dialog label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 12px 0 6px;
+}
+
+dialog input {
+  width: 100%;
+  font: inherit;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1px solid var(--surface-2);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 12px 0 0;
+}
+
+dialog menu {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 20px 0 0;
+  padding: 0;
+}
