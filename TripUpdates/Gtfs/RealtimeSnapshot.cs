@@ -6,6 +6,12 @@ public sealed record RealtimeSnapshot(
     DateTimeOffset FetchedAt,
     DateTimeOffset? FeedTimestamp)
 {
+    /// <summary>
+    /// The trips this reading already accounts for. A trip with a live prediction must not also be
+    /// offered from the timetable, or one bus shows up twice — once observed, once as printed.
+    /// </summary>
+    public IReadOnlySet<string> CoveredTripIds { get; init; } = new HashSet<string>(StringComparer.Ordinal);
+
     public static RealtimeSnapshot Empty(DateTimeOffset at) =>
         new(new Dictionary<string, IReadOnlyList<DateTimeOffset>>(), at, null);
 }

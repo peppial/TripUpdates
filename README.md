@@ -26,6 +26,20 @@ The server polls upstream once per interval no matter how many phones are watchi
 each phone roughly 200 bytes of JSON. Polling the 560 KB protobuf directly from a phone would
 cost about 67 MB per hour.
 
+### Realtime first, timetable second
+
+Both sources are merged in time order, then the first two are shown. They cannot simply be
+concatenated: a trip enters the realtime feed only once it starts running, so realtime regularly
+knows about a *later* bus while the one due sooner is still nothing but a timetable row. Appending
+the timetable behind the live times would hide the very bus the rider is waiting for.
+
+One bus must never occupy both rows, so the timetable side drops trips realtime already tracks, and
+any two slots landing on the same displayed minute collapse into one, the live reading winning.
+
+Service days come from `calendar_dates.txt` — this feed ships no `calendar.txt`, listing every
+operating day explicitly (~950 services per date) — and departure times are parsed as offsets from
+the start of the service day, so a `24:40:00` bus lands at 00:40 the next morning.
+
 ### Resolving settings to feed ids
 
 The line and stop are configured by name and resolved against the static feed on every refresh,
@@ -93,8 +107,12 @@ Then open the HTTPS URL on the phone and use "Add to Home screen".
 
 ## Behaviour when things break
 
-- **No upcoming departures** is a normal state, not an error — line 66 is a mountain route with
-  long gaps and an early last bus. It shows "няма предстоящи курсове".
+- **No realtime prediction** is the common case, not an error. Sofia's realtime feed only carries
+  trips that are already running, and line 66 is a mountain route with hour-long gaps — for most
+  of the day it publishes nothing at all for the uphill direction. The printed timetable fills the
+  gap, marked "по разписание" so a scheduled time is never mistaken for an observed one.
+- **No upcoming departures** then means the timetable is out too — the last bus has gone. It shows
+  "няма предстоящи курсове".
 - **Upstream failure** keeps the last good reading and marks it stale rather than discarding it.
 - **App unreachable** still opens: the service worker serves the shell, and the last successful
   reading is restored from `localStorage`, dimmed, with its age shown.

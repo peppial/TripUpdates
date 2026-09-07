@@ -25,6 +25,11 @@ public class ArrivalsServiceTests
         return new FeedState(new RealtimeSnapshot(byStop, fetchedAt, fetchedAt), null);
     }
 
+    /// <summary>
+    /// The captured feed has a live prediction only for the downhill direction — Sofia's realtime
+    /// feed carries running trips only. Uphill has to come from the printed timetable, which is the
+    /// case that used to read "няма предстоящи курсове" while a bus was on its way.
+    /// </summary>
     [Fact]
     public void Produces_the_two_messages_from_the_real_captured_feed()
     {
@@ -39,9 +44,16 @@ public class ArrivalsServiceTests
         var snapshot = GtfsRealtimeReader.Read(pb, catalog.RouteId, catalog.AllStopIds, Fixtures.FeedCapturedAt);
         var response = Service().Build(catalog, new FeedState(snapshot, null), Fixtures.FeedCapturedAt);
 
-        Assert.Equal(
-            ["66 към Алеко — няма предстоящи курсове", "66 към София ще дойде след 43 минути"],
-            response.Directions.Select(d => d.Message).ToArray());
+        var aleko = response.Directions[0];
+        var sofia = response.Directions[1];
+
+        // Captured 18:42 Sofia: the last uphill bus of the day leaves at 20:16 (+93), and the one
+        // after it is the first of the next morning at 07:46 (+783).
+        Assert.True(aleko.Scheduled);
+        Assert.Equal("66 към Алеко по разписание след 93 минути, следващият след 783 минути", aleko.Message);
+
+        Assert.False(sofia.Scheduled);
+        Assert.StartsWith("66 към София ще дойде след 43 минути", sofia.Message);
     }
 
     [Fact]
@@ -56,6 +68,60 @@ public class ArrivalsServiceTests
 
         Assert.Equal(4, aleko.Minutes);
         Assert.Equal(Now.AddMinutes(4), aleko.ArrivesAt);
+    }
+
+    [Fact]
+    public void Reports_the_bus_after_next_as_well()
+    {
+        var state = StateWith(Now,
+            ("A1471", Now.AddMinutes(17)),
+            ("A1471", Now.AddMinutes(4)),
+            ("A1471", Now.AddMinutes(9)));
+
+        var aleko = Service().Build(Catalog, state, Now).Directions[0];
+
+        Assert.Equal(4, aleko.Minutes);
+        Assert.Equal(9, aleko.ThenMinutes);
+        Assert.Equal(Now.AddMinutes(9), aleko.ThenArrivesAt);
+        Assert.Equal("66 към Алеко ще дойде след 4 минути, следващият след 9 минути", aleko.Message);
+    }
+
+    [Fact]
+    public void Leaves_the_second_slot_empty_when_only_one_bus_is_coming()
+    {
+        var state = StateWith(Now, ("A1471", Now.AddMinutes(6)));
+        var aleko = Service().Build(Catalog, state, Now).Directions[0];
+
+        Assert.Equal(6, aleko.Minutes);
+        Assert.Null(aleko.ThenMinutes);
+        Assert.Null(aleko.ThenArrivesAt);
+        Assert.Equal("66 към Алеко ще дойде след 6 минути", aleko.Message);
+    }
+
+    [Fact]
+    public void Pairs_the_two_soonest_across_several_stops_serving_one_direction()
+    {
+        var merged = new StaticCatalog("66", "A63", "Воденичарски механи",
+            [new DirectionBinding("към София", ["A1472", "A1473"], ["ЗООПАРКА"])]);
+        var state = StateWith(Now,
+            ("A1472", Now.AddMinutes(12)),
+            ("A1473", Now.AddMinutes(3)),
+            ("A1472", Now.AddMinutes(7)));
+
+        var sofia = Service().Build(merged, state, Now).Directions[0];
+
+        Assert.Equal(3, sofia.Minutes);
+        Assert.Equal(7, sofia.ThenMinutes);
+    }
+
+    [Fact]
+    public void Does_not_count_a_past_bus_as_the_one_after_next()
+    {
+        var state = StateWith(Now, ("A1471", Now.AddMinutes(-5)), ("A1471", Now.AddMinutes(8)));
+        var aleko = Service().Build(Catalog, state, Now).Directions[0];
+
+        Assert.Equal(8, aleko.Minutes);
+        Assert.Null(aleko.ThenMinutes);
     }
 
     [Fact]

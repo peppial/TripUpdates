@@ -19,6 +19,42 @@ public class GtfsStaticParserTests
     }
 
     [Fact]
+    public void Reads_the_printed_timetable_for_each_direction()
+    {
+        var aleko = Resolve().Directions.Single(d => d.Label == "към Алеко");
+
+        Assert.NotEmpty(aleko.Timetable);
+        Assert.All(aleko.Timetable, d => Assert.NotEmpty(d.ServiceId));
+
+        // Departures are the ones written against this direction's stop, not the whole route.
+        Assert.Contains(aleko.Timetable, d => d.TimeOfDay == new TimeSpan(18, 16, 0));
+    }
+
+    [Fact]
+    public void Keeps_the_two_directions_timetables_apart()
+    {
+        var catalog = Resolve();
+        var aleko = catalog.Directions.Single(d => d.Label == "към Алеко");
+        var sofia = catalog.Directions.Single(d => d.Label == "към София");
+
+        Assert.NotEqual(
+            aleko.Timetable.Select(d => d.TimeOfDay).Order().ToArray(),
+            sofia.Timetable.Select(d => d.TimeOfDay).Order().ToArray());
+    }
+
+    [Fact]
+    public void Assumes_every_service_runs_when_the_feed_carries_no_calendar()
+    {
+        // The trimmed fixture has no calendar_dates.txt. Hiding the whole timetable in that case
+        // would be worse than showing it.
+        var catalog = Resolve();
+
+        Assert.Empty(catalog.ServiceDates);
+        Assert.NotEmpty(catalog.ScheduledAfter(
+            catalog.Directions[0], new DateTimeOffset(2026, 9, 7, 0, 1, 0, TimeSpan.Zero)));
+    }
+
+    [Fact]
     public void Resolves_line_number_to_route_id()
     {
         Assert.Equal("A63", Resolve().RouteId);

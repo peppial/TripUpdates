@@ -15,6 +15,7 @@ public static class GtfsRealtimeReader
     {
         var feed = FeedMessage.Parser.ParseFrom(protobuf);
         var arrivals = new Dictionary<string, List<DateTimeOffset>>(StringComparer.Ordinal);
+        var coveredTrips = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var entity in feed.Entity)
         {
@@ -32,6 +33,8 @@ public static class GtfsRealtimeReader
                 if (!arrivals.TryGetValue(stopTime.StopId, out var list))
                     arrivals[stopTime.StopId] = list = [];
                 list.Add(DateTimeOffset.FromUnixTimeSeconds(time.Value));
+
+                if (update.Trip?.TripId is { Length: > 0 } tripId) coveredTrips.Add(tripId);
             }
         }
 
@@ -44,6 +47,6 @@ public static class GtfsRealtimeReader
             ? DateTimeOffset.FromUnixTimeSeconds((long)feed.Header.Timestamp)
             : (DateTimeOffset?)null;
 
-        return new RealtimeSnapshot(byStop, fetchedAt, feedTimestamp);
+        return new RealtimeSnapshot(byStop, fetchedAt, feedTimestamp) { CoveredTripIds = coveredTrips };
     }
 }

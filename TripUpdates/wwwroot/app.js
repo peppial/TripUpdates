@@ -75,16 +75,39 @@ function renderDirections(data, stale) {
     } else {
       if (d.minutes <= 3) card.classList.add("soon");
       minutes.textContent = String(d.minutes);
-      const unit = document.createElement("span");
-      unit.className = "unit";
-      unit.textContent = d.minutes === 1 ? "минута" : "минути";
-      value.append(minutes, unit);
     }
-    if (!value.contains(minutes)) value.append(minutes);
+    value.append(minutes);
+
+    if (d.hasArrival) {
+      // The bus after next rides along in a smaller size: "4, 65 минути".
+      if (d.thenMinutes != null) {
+        const then = document.createElement("span");
+        then.className = "then";
+        then.textContent = `, ${d.thenMinutes}`;
+        value.append(then);
+      }
+      if (d.minutes !== 0 || d.thenMinutes != null) {
+        const unit = document.createElement("span");
+        unit.className = "unit";
+        unit.textContent = d.minutes === 1 && d.thenMinutes == null ? "минута" : "минути";
+        value.append(unit);
+      }
+    }
 
     // The full sentence is what a screen reader announces.
     card.setAttribute("aria-label", d.message);
     card.append(label, value);
+
+    // Timetable times are not a live prediction, and saying so is the difference between
+    // "the bus is 57 minutes away" and "the bus is meant to be 57 minutes away".
+    if (d.scheduled) card.classList.add("scheduled");
+    if (d.scheduled || d.thenScheduled) {
+      const note = document.createElement("p");
+      note.className = "note";
+      note.textContent = d.scheduled ? "по разписание" : "вторият е по разписание";
+      card.append(note);
+    }
+
     return card;
   }));
   el.directions.setAttribute("aria-busy", "false");

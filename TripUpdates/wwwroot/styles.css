@@ -116,6 +116,16 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.then {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  /* The comma belongs to the big number, so pull it back over the flex gap. */
+  margin-left: -8px;
+}
+
 .unit {
   font-size: 20px;
   color: var(--muted);
@@ -137,6 +147,24 @@ main {
 
 .card.soon .minutes {
   color: var(--warn);
+}
+
+.card .note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* A timetable time is a promise, not an observation: keep it plainer than a live prediction. */
+.card.scheduled .minutes {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.card.soon.scheduled .minutes,
+.card.now.scheduled .minutes {
+  color: var(--muted);
 }
 
 .card.stale {
